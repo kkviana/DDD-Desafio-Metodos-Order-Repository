@@ -21,7 +21,7 @@ export default class OrderRepository implements OrderRepositoryInterface {
         })),
       },
       {
-        // include: [{ model: OrderItemModel }],
+        include: [{ model: OrderItemModel }],
       }
     );
   }

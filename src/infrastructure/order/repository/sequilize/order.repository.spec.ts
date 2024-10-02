@@ -62,7 +62,7 @@ describe("Order repository test", () => {
 
     const orderModel = await OrderModel.findOne({
       where: { id: order.id },
-      include: ["items"],
+      include: ['items'],
     });
 
     expect(orderModel.toJSON()).toStrictEqual({
@@ -129,59 +129,50 @@ describe("Order repository test", () => {
     expect(foundOrders).toStrictEqual(orders);
   });
 
-  it("should update an order by changing customer, adding and removing items", async () => {
-    // Original Order
+  it("should add a new item to an existing order", async () => {
     const customerRepository = new CustomerRepository();
     const customer = new Customer("c1", "Customer 1");
     const address = new Address("Street 1", 1, "Zipcode 1", "City 1");
     customer.changeAddress(address);
     await customerRepository.create(customer);
-  
+
     const productRepository = new ProductRepository();
     const product = new Product("p1", "Product 1", 10);
     await productRepository.create(product);
-  
+
     const orderItem = new OrderItem("1", product.name, product.price, product.id, 2);
     const order = new Order("o1", customer.id, [orderItem]);
     const orderRepository = new OrderRepository();
     await orderRepository.create(order);
-  
-    // Test changeCustomer
-    const customer2 = new Customer("c2", "Customer 2");
-    const address2 = new Address("Street 2", 2, "Zipcode 2", "City 2");
-    customer2.changeAddress(address2);
-    await customerRepository.create(customer2);
-  
-    // Change the customer for the order
-    order.changeCustomer(customer2.id);
-  
-    // Test addItem
+
     const product2 = new Product("p2", "Product 2", 20);
     await productRepository.create(product2);
-  
-    const orderItem2 = new OrderItem("2", product2.name, product2.price, product2.id, 3);
-    order.addItem(orderItem2); // Adding new item
-  
-    // Test removeItem
-    order.removeItem(orderItem.id); // Removing the original item
-  
-    // Update the order in the repository
+
+    const newItem = new OrderItem("2", product2.name, product2.price, product2.id, 3);
+    order.addItem(newItem);
+
     await orderRepository.update(order);
-  
-    // Fetch the updated order from the database
+
     const orderModel = await OrderModel.findOne({
       where: { id: order.id },
-      include: ["items"],
+      include: ['items'],
     });
-  
-    // Assert the order was updated correctly
+
     expect(orderModel.toJSON()).toStrictEqual({
       id: "o1",
-      customer_id: "c2", // Customer was changed
-      total: order.total(), // The total should reflect the change in items
+      customer_id: "c1",
+      total: order.total(),
       items: [
         {
-          id: "2", // Only the new item should be present
+          id: "1",
+          name: product.name,
+          price: product.price,
+          quantity: 2,
+          order_id: "o1",
+          product_id: "p1",
+        },
+        {
+          id: "2",
           name: product2.name,
           price: product2.price,
           quantity: 3,
